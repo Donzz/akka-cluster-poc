@@ -2,37 +2,39 @@ package ru.donz.wf.behaviors;
 
 import akka.persistence.typed.PersistenceId;
 import akka.persistence.typed.javadsl.CommandHandler;
+import akka.persistence.typed.javadsl.Effect;
 import akka.persistence.typed.javadsl.EventHandler;
 import akka.persistence.typed.javadsl.EventSourcedBehavior;
-import lombok.Data;
 
-public class FlowBehavior extends EventSourcedBehavior<FlowBehavior.Command, FlowBehavior.Event, FlowBehavior.State> {
+public class FlowBehavior extends EventSourcedBehavior<FlowProtocol, FlowEvent, FlowState> {
 
     public FlowBehavior(PersistenceId persistenceId) {
         super(persistenceId);
     }
 
     @Override
-    public State emptyState() {
-        return new State(null, null);
+    public FlowState emptyState() {
+        return new FlowState("", "", "");
     }
 
     @Override
-    public CommandHandler<Command, Event, State> commandHandler() {
-        return null;
+    public CommandHandler<FlowProtocol, FlowEvent, FlowState> commandHandler() {
+        return newCommandHandlerBuilder()
+                .forAnyState()
+                .onCommand(FlowProtocol.IncomingExternalMessage.class, this::onIncomingExternalMessage)
+                .build();
     }
 
     @Override
-    public EventHandler<State, Event> eventHandler() {
-        return null;
+    public EventHandler<FlowState, FlowEvent> eventHandler() {
+        return newEventHandlerBuilder()
+                .forAnyState()
+                .onEvent(FlowEvent.IncomingExternalMessage.class, FlowState::newIncomingExternalMessage)
+                .build();
     }
 
-    interface Command {}
-    interface Event {}
-
-    @Data
-    public final class State {
-        private final String txId;
-        private final String lastMessageType;
+    private Effect<FlowEvent, FlowState> onIncomingExternalMessage(FlowState currentState, FlowProtocol.IncomingExternalMessage message) {
+        return Effect().persist(new FlowEvent.IncomingExternalMessage(message.getMessage()))
+                .thenReply(message.getReplyTo(), s -> "OK");
     }
 }
