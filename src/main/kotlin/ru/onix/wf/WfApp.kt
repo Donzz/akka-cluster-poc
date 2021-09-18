@@ -5,7 +5,7 @@ import akka.actor.typed.javadsl.AskPattern
 import akka.persistence.typed.PersistenceId
 import org.slf4j.LoggerFactory
 import ru.onix.wf.behaviors.FlowBehavior
-import ru.onix.wf.behaviors.FlowProtocol
+import ru.onix.wf.behaviors.FlowCommand
 import java.time.Duration
 
 fun Any.log() = LoggerFactory.getLogger(javaClass)
@@ -19,9 +19,9 @@ object WfApp {
         val actorSystem = ActorSystem.create(FlowBehavior(PersistenceId.ofUniqueId("1")), "wfSystem")
         log().info("Before sending")
 
-        val completionStage = AskPattern.ask<FlowProtocol, String>(
+        val completionStage = AskPattern.ask<FlowCommand, String>(
             actorSystem,
-            { FlowProtocol.IncomingExternalMessage("Azaza", it) },
+            { FlowCommand.IncomingExternalMessage("Azaza", it) },
             Duration.ofSeconds(10),
             actorSystem.scheduler()
         )

@@ -6,16 +6,16 @@ import akka.persistence.typed.javadsl.EventHandler
 import akka.persistence.typed.javadsl.EventSourcedBehavior
 
 class FlowBehavior(val persistenceId: PersistenceId) :
-    EventSourcedBehavior<FlowProtocol, FlowEvent, FlowState>(persistenceId) {
+    EventSourcedBehavior<FlowCommand, FlowEvent, FlowState>(persistenceId) {
 
     override fun emptyState(): FlowState {
         return FlowState("", "", "")
     }
 
-    override fun commandHandler(): CommandHandler<FlowProtocol, FlowEvent, FlowState> {
+    override fun commandHandler(): CommandHandler<FlowCommand, FlowEvent, FlowState> {
         return newCommandHandlerBuilder()
             .forAnyState()
-            .onCommand(FlowProtocol.IncomingExternalMessage::class.java, this::onIncomingExternalMessage)
+            .onCommand(FlowCommand.IncomingExternalMessage::class.java, this::onIncomingExternalMessage)
             .build()
     }
 
@@ -28,7 +28,7 @@ class FlowBehavior(val persistenceId: PersistenceId) :
 
     private fun onIncomingExternalMessage(
         state: FlowState,
-        message: FlowProtocol.IncomingExternalMessage,
+        message: FlowCommand.IncomingExternalMessage,
     ) = Effect()
         .persist(FlowEvent.IncomingExternalMessage(message.message))
         .thenReply(message.replyTo, { "OK" })
